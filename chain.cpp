@@ -1,6 +1,8 @@
 #include "basic_types.h"
 #include "chain.h"
 #include "run_code.cpp"
+#include <vector>
+#include "bigint.cpp"
 
 using namespace chain;
 
@@ -40,7 +42,19 @@ void Block::unrun(States &states) { for (auto i=this->txns.end()-1; i >= this->t
 bool Block::runCheckValid(States &states) {
   if (this->validityChecked) return true;
   for (int i=0;i<2;i++) if (!this->approved[i]->runCheckValid(states)) { this->approved[i]->unrun(states); return false; }
-  Hash totDiff = this->hash;
+  bigint hash(0);
+  bigint bignum = bigint(1);
+  for (int i=0;i<256;i++) bignum *= 2;
+  for (int i=sizeof(this->beforeHash.bytes)-1;i>=0;i--) {
+    hash=hash/255;
+    hash+=this->beforeHash.bytes[i];
+  }
+  hash = bignum/(hash+1);
+  Hash totDiff(0);
+  for (int i=sizeof(this->beforeHash.bytes)/sizeof(int);i>=0;i--) {
+    ((int*)totDiff.bytes)[i]=hash.a[0];
+    hash/=255;
+  }
   std::vector<Key> keys;
   for (auto i = this->txns.begin(); i < this->txns.end(); i++) {
     bool valid = i->valid(states,totDiff) && states[i->send].code.code.size() == 0;
@@ -68,7 +82,7 @@ bool Block::runCheckValid(States &states) {
     for (auto k = keys.begin();k<keys.end();k++) {
       if (*k==*j->signer) { found=true;break; }
     }
-    if (!found || !(*j).valid()) {
+    if (!found || !(*j).valid(this->beforeHash.bytes,sizeof(this->beforeHash))) {
       for (auto i = this->txns.end()-1; i >= this->txns.begin(); i--) i->unrun(states);
       return false;
     }

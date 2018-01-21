@@ -69,6 +69,7 @@ namespace chain {
     Block    *approved[2];
     Time     time;
     long int nonce;
+    Hash     beforeHash;
     std::vector<Sig> sigs;
     bool     validityChecked;
     Hash     hash;
