@@ -41,19 +41,37 @@ bool Block::runCheckValid(States &states) {
   if (this->validityChecked) return true;
   for (int i=0;i<2;i++) if (!this->approved[i]->runCheckValid(states)) { this->approved[i]->unrun(states); return false; }
   Hash totDiff = this->hash;
-  std::vector<Sig> sigs;
+  std::vector<Key> keys;
   for (auto i = this->txns.begin(); i < this->txns.end(); i++) {
     bool valid = i->valid(states,totDiff) && states[i->send].code.code.size() == 0;
     if (valid) {
       i->run(states,totDiff);
+      bool notInSigs = true;
+      for (auto j = keys.begin();j<keys.end();j++) if (i->send==*j) {notInSigs = false;break;}
+      if (notInSigs) keys.push_back(i->send);
+
+      if (totDiff==Hash(0)) {
+        for (i--; i >= this->txns.begin(); i--) i->unrun(states);
+        return false;
+      }
     } else { //FUCK GO BACK
       for (i--; i >= this->txns.begin(); i--) i->unrun(states);
       return false;
     }
-  } //TODO: check signatures
-  if (this->hash>totDiff) { //FUCK GO BACK
+  }
+  if (this->hash>totDiff || sigs.size() != this->sigs.size()) { //FUCK GO BACK
     for (auto i = this->txns.end()-1; i >= this->txns.begin(); i--) i->unrun(states);
     return false;
+  }
+  for (auto j = this->sigs.begin();j<sigs.end();j++) {
+    bool found = false;
+    for (auto k = keys.begin();k<keys.end();k++) {
+      if (*k==*j->signer) { found=true;break; }
+    }
+    if (!found || !(*j).valid()) {
+      for (auto i = this->txns.end()-1; i >= this->txns.begin(); i--) i->unrun(states);
+      return false;
+    }
   }
   this->validityChecked = true;
   return true;

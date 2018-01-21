@@ -46,75 +46,110 @@ namespace chain {
         stayInLoop = false;
         break;
       case 1: //ADD
+        subDifficulty(3);
         mathOp(+,int);
       case 2: //SUB
+        subDifficulty(3);
         mathOp(-,int);
       case 3: //MULT
+        subDifficulty(3);
         mathOp(*,int);
       case 4: //DIV
+        subDifficulty(5);
         mathOp(*,int);
       case 5: //MOD
+        subDifficulty(5);
         mathOp(%,int);
       case 6: //NEG
+        subDifficulty(3);
         applyOp(unaryOp(-,int),sizeof(int));
       case 7: //MOV
+        subDifficulty(1);
         checkPtr(2,int);
         applyOp(setOp(ptrAt(2,int),int),4);
       case 8: //NOT
+        subDifficulty(1);
         applyOp(unaryOp(!,int),sizeof(int));
       case 9: //AND
+        subDifficulty(3);
         mathOp(&&,int);
       case 10: //OR
+        subDifficulty(3);
         mathOp(||,int);
       case 11: //NAND
+        subDifficulty(5);
         applyOp(binaryOp(&&,int);unaryOp(!,int);,sizeof(int)*2);
       case 12: //NOR
+        subDifficulty(5);
         applyOp(binaryOp(||,int);unaryOp(!,int);,sizeof(int)*2);
       case 13: //XOR
+        subDifficulty(5);
         applyOp(memAt(0,int) = !memAt(0,int) != !memAt(4,int);,sizeof(int)*2);
       case 14: //XNOR
+        subDifficulty(5);
         applyOp(memAt(0,int) = !memAt(0,int) == !memAt(4,int);,sizeof(int)*2);
       case 15: //BNOT
+        subDifficulty(1);
         applyOp(unaryOp(~,int),sizeof(int));
       case 16: //BAND
+        subDifficulty(3);
         mathOp(&,int);
       case 17: //BOR
+        subDifficulty(3);
         mathOp(|,int);
       case 18: //BNAND
+        subDifficulty(5);
         applyOp(binaryOp(&,int);unaryOp(!,int);,sizeof(int)*2);
       case 19: //BNOR
+        subDifficulty(5);
         applyOp(binaryOp(|,int);unaryOp(!,int);,sizeof(int)*2);
       case 20: //BXOR
+        subDifficulty(3);
         mathOp(^,int);
       case 21: //BXNOR
+        subDifficulty(5);
         applyOp(binaryOp(|,int);unaryOp(~,int);,sizeof(int)*2);
       case 22: //JMP
+        subDifficulty(3);
         applyOpNoAdd(jumpedfrom=location;location=memAt(0,loctype);,sizeof(loctype));
       case 23: //JG
+        subDifficulty(4);
         applyOpNoAdd(if(memAt(0,int)>0){jumpedfrom=location;location=memAt(0,loctype);}else location += sizeof(loctype)+sizeof(int)+1,sizeof(short)+sizeof(int));
       case 24: //JL
+        subDifficulty(4);
         applyOpNoAdd(if(memAt(0,int)<0){jumpedfrom=location;location=memAt(0,loctype);}else location += sizeof(loctype)+sizeof(int)+1,sizeof(short)+sizeof(int));
       case 25: //JE
+        subDifficulty(4);
         applyOpNoAdd(if(memAt(0,int)==0){jumpedfrom=location;location=memAt(0,loctype);}else location += sizeof(loctype)+sizeof(int)+1,sizeof(short)+sizeof(int));
       case 26: //JUMPEDFROM
+        subDifficulty(2);
         applyOp(setOp(jumpedfrom,loctype),sizeof(loctype));
       case 27: //REVERT
+        subDifficulty(10*txns.size());
         applyOp(revert();,0);
       case 28: //ADDR
+        subDifficulty(12);
         copyBytesOp(this->recieve.bytes,sizeof(this->recieve.bytes));
       case 29: //CALLADDR
+        subDifficulty(12);
         copyBytesOp(this->send.bytes,sizeof(this->send.bytes));
       case 30: //CALLVALUE
+        subDifficulty(12);
         copyBytesOp(this->args,sizeof(this->args));
       case 31: //MONEY
+        subDifficulty(7);
         applyOp(setOp(states[this->recieve].money,Coins),sizeof(loctype));
       case 32: //CODE
+        subDifficulty(states[this->recieve].code.code.size()/4);
         copyBytesOp(states[this->recieve].code.code.data(),states[this->recieve].code.code.size());
       case 33: //TIMESTAMP
+        subDifficulty(5);
         applyOp(setOp(block.time,Time),sizeof(loctype));
       case 34: //GASLEFT
+        subDifficulty(12);
         copyBytesOp(difficulty.bytes,sizeof(this->recieve.bytes));
       case 35: //GIVE
+        subDifficulty(12);
         checkArgs(sizeof(loctype)*2+sizeof(Coins));
         checkPtr(0,Key);
         checkPtr(sizeof(loctype)+sizeof(Coins),int);
@@ -129,6 +164,7 @@ namespace chain {
         }
         break;
       case 36: //MAKECTRCT
+        subDifficulty(12);
         checkArgs(sizeof(loctype)*3);
         checkPtr(0,char);
         checkPtr(sizeof(loctype),char);
@@ -149,6 +185,7 @@ namespace chain {
         }
         break;
       case 37: //CALLCTRCT
+        subDifficulty(12);
         checkArgs(sizeof(loctype)*2+sizeof(Coins));
         checkPtr(0,Key);
         checkPtr(sizeof(loctype)+sizeof(Coins),int);
@@ -164,6 +201,7 @@ namespace chain {
         }
         break;
       case 38: //RSTORAGE
+        subDifficulty(4);
         checkArgs(sizeof(loctype)*2);
         checkPtr(0,int);
         applyOp(setOp(states[this->recieve].storage[ptrAt(sizeof(loctype),int)],int),sizeof(loctype)*2);
@@ -172,6 +210,7 @@ namespace chain {
         checkPtr(0,int);
         checkPtr(sizeof(loctype),int);
         txns.push_back(new WriteStorageTxn(this->send,ptrAt(0,int),ptrAt(0,int)));
+        if (states[this->recieve].storage[ptrAt(0,int)]!=0) {subDifficulty(8);} else {subDifficulty(20);}
         txns.back()->run(states,difficulty);
         states[this->recieve].storage[ptrAt(0,int)] = ptrAt(sizeof(loctype),int);
         break;

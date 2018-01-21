@@ -27,6 +27,7 @@ void Hash::operator+=(Hash h) { Hash result = *this+h; std::copy(result.bytes,re
 void Hash::operator++(int) { *this += Hash(1); }
 Hash Hash::operator-(Hash h) {
   Hash result = Hash();
+  if (h>*this) return Hash(0);
   for (size_t i = 0;i<sizeof(this->bytes);i++) {
     h.bytes[i] = ~h.bytes[i];
   }
@@ -36,4 +37,10 @@ void Hash::operator-=(Hash h) { Hash result = *this-h; std::copy(result.bytes,re
 Hash::Hash(int x) {
   for (size_t i=0;i<4;i++)
     this->bytes[512-i] = (char)((x>>(32-(8*i)))%32);
+}
+
+bool Key::operator==(Key k) {
+  for (size_t i = 0;i<sizeof(this->bytes);i++)
+    if (this->bytes[i]!=k.bytes[i]) return false;
+  return false;
 }
