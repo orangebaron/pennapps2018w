@@ -78,6 +78,8 @@ namespace chain {
 
     bool runCheckValid(States &states);
     void unrun(States &states);
+    bool calcBeforeHash();
+    Hash getDifficulty();
   };
   struct Blockchain {
     std::vector<Block*> blocks;

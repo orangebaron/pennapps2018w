@@ -7,7 +7,7 @@
 
 using namespace chain;
 
-#define addNormDifficulty(a) difficulty-=Hash(65*a)
+#define addNormDifficulty(a) difficulty-=Hash(20*a)
 
 //TODO: make a new entry in states when a transaction affects an address for the first time
 
@@ -41,6 +41,10 @@ void WriteStorageTxn::unrun(States &states) {
 }
 void Block::unrun(States &states) { for (auto i=txns.end()-1; i >= txns.begin(); i--) i->unrun(states); }
 bool Block::runCheckValid(States &states) {
+  if (this->approved[0]==NULL) { //genesis block
+    states[Key()].money=880654880654;
+  }
+
   if (validityChecked) return true;
   for (int i=0;i<2;i++) if (
     time-approved[i]->time > acceptTime*2
