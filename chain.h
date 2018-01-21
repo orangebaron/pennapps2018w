@@ -7,6 +7,7 @@
 #include "basic_types.h"
 
 namespace chain {
+  const Time acceptTime = 20;
   enum class TxnType { GiveTxn,CallTxn,MakeContractTxn };
   struct TxnPtrWrapper {
     TxnType type;
@@ -78,8 +79,13 @@ namespace chain {
     bool runCheckValid(States &states);
     void unrun(States &states);
   };
-
-  struct TxnFailException: public std::exception {};
+  struct Blockchain {
+    std::vector<Block*> blocks;
+    States states;
+    Blockchain(std::vector<Block*> blocks);
+    bool validInitCheck();
+    bool addBlock(Block *b);
+  };
 }
 
 #endif
