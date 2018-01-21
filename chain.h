@@ -16,44 +16,66 @@ namespace chain {
     Key   key;
     Coins money;
     Code  code;
-    int   storage[];
+    std::map<int,int> storage;
   };
   typedef std::map<Key,State> States;
 
-  struct GiveTxn {
-    Key   send;
+  struct Txn {
+    Key  send;
+    virtual void run(States &states, Hash &difficulty);
+    virtual void unrun(States &states);
+    virtual bool valid(States &states, Hash &difficulty);
+    Txn(Key send):send(send){}
+  };
+
+  struct GiveTxn: public Txn {
     Key   recieve;
     Coins amt;
     void run(States &states, Hash &difficulty);
-    void unrun(States &states, Hash &difficulty);
-    bool valid(States &states);
+    void unrun(States &states);
+    bool valid(States &states, Hash &difficulty);
+    GiveTxn(Key send,Key recieve,Coins amt):Txn(send),recieve(recieve),amt(amt){}
   };
-  struct CallTxn {
-    GiveTxn giveTxn;
-    char    args[sizeof(GiveTxn)];
+  struct CallTxn: public Txn {
+    Key   recieve;
+    Coins amt;
+    char  args[sizeof(GiveTxn)];
+    void  *block;
     void run(States &states, Hash &difficulty);
-    void unrun(States &states, Hash &difficulty);
-    bool valid(States &states);
+    void unrun(States &states){}
+    bool valid(States &states, Hash &difficulty);
+    CallTxn(Key send,Key recieve,Coins amt,void *block):Txn(send),recieve(recieve),amt(amt),block(block){}
   };
-  struct MakeContractTxn {
-    Key  send;
+  struct MakeContractTxn: public Txn {
     Code code;
     void run(States &states, Hash &difficulty);
-    void unrun(States &states, Hash &difficulty);
-    bool valid(States &states);
+    void unrun(States &states);
+    bool valid(States &states, Hash &difficulty);
+    MakeContractTxn(Key send,Code code):Txn(send),code(code){}
     int getSize();
   };
+  struct WriteStorageTxn: public Txn {
+    int loc;
+    int val;
+    void run(States &states, Hash &difficulty);
+    void unrun(States &states);
+    bool valid(States &states, Hash &difficulty) { return true; }
+    WriteStorageTxn(Key send,int loc, int val):Txn(send),loc(loc),val(val){}
+  private:
+    int before;
+  };
   struct Block {
-    std::vector<TxnPtrWrapper> txns;
+    std::vector<Txn> txns;
     Block    *approved[2];
     Time     time;
     long int nonce;
-    Sig      sigs[];
+    std::vector<Sig> sigs;
     bool     validityChecked;
+    Hash     hash;
+    int      numContractsMade;
 
     bool runCheckValid(States &states);
     void unrun(States &states);
-    std::vector<char> getBytes();
   };
 
   struct TxnFailException: public std::exception {};
