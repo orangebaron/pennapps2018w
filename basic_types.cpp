@@ -58,7 +58,7 @@ bool Sig::valid(char *data,size_t len) {
   publicKey.Load(
     *new CryptoPP::ArraySource((CryptoPP::byte*)signer->bytes, sizeof(signer->bytes), true /*pumpAll*/)
   );
-  CryptoPP::ECDSA<CryptoPP::ECP,CryptoPP::SHA1>::Verifier verifier(publicKey);
+  CryptoPP::ECDSA<CryptoPP::ECP,CryptoPP::SHA256>::Verifier verifier(publicKey);
   bool result = verifier.VerifyMessage(
     (const CryptoPP::byte*)data, len,
     (const CryptoPP::byte*)bytes, sizeof(bytes)
